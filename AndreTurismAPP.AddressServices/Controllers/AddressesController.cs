@@ -52,7 +52,7 @@ namespace AndreTurismAPP.AddressServices.Controllers
             return address;
         }
 
-        [HttpGet("{Cep:length(8)}", Name = "GetAddressByCep")]
+        [HttpGet("{cep:length(8)}", Name = "GetAddressByCep")]
         public async Task<ActionResult<Address>> GetAddressByCep(string cep)
         {
             var aux = ViaCEP.GetAddress(cep).Result;
@@ -151,6 +151,7 @@ namespace AndreTurismAPP.AddressServices.Controllers
                 return NotFound();
             }
             var address = await _context.Address.FindAsync(id);
+
             if (address == null)
             {
                 return NotFound();

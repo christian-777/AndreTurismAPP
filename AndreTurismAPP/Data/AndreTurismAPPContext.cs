@@ -17,5 +17,7 @@ namespace AndreTurismAPP.Data
         public DbSet<Models.Address> Address { get; set; } = default!;
 
         public DbSet<Models.Customer>? Customer { get; set; }
+
+        public DbSet<Models.Hotel>? Hotel { get; set; }
     }
 }
