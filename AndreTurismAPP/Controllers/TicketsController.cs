@@ -5,19 +5,19 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using AndreTurismAPP.TicketServices.Data;
+using AndreTurismAPP.Data;
 using Models;
-using AndreTurismAPP.TicketServices.Services;
+using AndreTurismAPP.Services;
 
-namespace AndreTurismAPP.TicketServices.Controllers
+namespace AndreTurismAPP.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class TicketsController : ControllerBase
     {
-        private readonly AndreTurismAPPTicketServicesContext _context;
+        private readonly AndreTurismAPPContext _context;
 
-        public TicketsController(AndreTurismAPPTicketServicesContext context)
+        public TicketsController(AndreTurismAPPContext context)
         {
             _context = context;
         }
@@ -30,8 +30,7 @@ namespace AndreTurismAPP.TicketServices.Controllers
           {
               return NotFound();
           }
-            var aux = await _context.Ticket.Include(t => t.Source).Include(t=> t.Source.City).Include(t => t.Destiny).Include(t => t.Destiny.City).Include(t => t.Customer).Include(t => t.Customer.Address).Include(t => t.Customer.Address.City).ToListAsync();
-            return aux;
+            return await TicketService.GetTicket();
         }
 
         // GET: api/Tickets/5
@@ -90,41 +89,10 @@ namespace AndreTurismAPP.TicketServices.Controllers
         {
           if (_context.Ticket == null)
           {
-              return Problem("Entity set 'AndreTurismAPPTicketServicesContext.Ticket'  is null.");
+              return Problem("Entity set 'AndreTurismAPPContext.Ticket'  is null.");
           }
-            var source = await AddressService.GetAddressByCep(ticket.Source.CEP);
-           
-            if (source != null)
-                NotFound();
-           
-            ticket.Source = source;
-           
-            var dest = await AddressService.GetAddressByCep(ticket.Destiny.CEP);
-           
-            if (dest != null)
-                NotFound();
-           
-            ticket.Destiny = dest;
-           
-            var customer = (await CustomerService.GetCustomer()).Where(c=>c.Id==ticket.Customer.Id).First();
-           
-            if (customer != null)
-                NotFound();
-            
-            ticket.Customer = customer;
 
-            _context.Entry(customer).State = EntityState.Modified;
-            _context.Entry(source).State = EntityState.Added;
-            _context.Entry(dest).State = EntityState.Added;
-            _context.Entry(source.City).State = EntityState.Added;
-            _context.Entry(dest.City).State = EntityState.Added;
-            _context.Entry(ticket).State = EntityState.Added;
-
-
-            _context.Ticket.Add(ticket);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetTicket", new { id = ticket.Id }, ticket);
+            return await TicketService.PostTcket(ticket);
         }
 
         // DELETE: api/Tickets/5

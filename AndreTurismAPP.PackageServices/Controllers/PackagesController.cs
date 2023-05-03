@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AndreTurismAPP.PackageServices.Data;
 using Models;
+using AndreTurismAPP.PackageServices.Services;
 
 namespace AndreTurismAPP.PackageServices.Controllers
 {
@@ -90,6 +91,40 @@ namespace AndreTurismAPP.PackageServices.Controllers
           {
               return Problem("Entity set 'AndreTurismAPPPackageServicesContext.Package'  is null.");
           }
+            var hotel = (await HotelService.GetHotel()).Where(h=>h.Id==package.Hotel.Id).First();
+            if (hotel == null)
+                return NotFound();
+
+            var aux= (await TicketService.GetTicket());
+            bool flag = false;
+            Ticket ticket=new();
+            foreach(var item in aux)
+            {
+                var i = item.Id;
+                if (item.Id == package.Ticket.Id)
+                {
+                    ticket = item;
+                    flag = true;
+                }
+            }
+            if (flag == false)
+                return NotFound();
+
+            var customer = (await CustomerService.GetCustomer()).Where(c => c.Id == package.Customer.Id).First();
+            if (customer == null)
+                return NotFound();
+            customer.Id = 0;
+            hotel.Id = 0;
+            ticket.Id = 0;
+
+            package.Hotel= hotel;
+            package.Ticket = ticket;
+            package.Customer = customer;
+
+            _context.Entry(hotel).State = EntityState.Added;
+            _context.Entry(ticket).State = EntityState.Added;
+            _context.Entry(customer).State = EntityState.Added;
+            _context.Entry(package).State = EntityState.Added;
             _context.Package.Add(package);
             await _context.SaveChangesAsync();
 
