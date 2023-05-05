@@ -54,7 +54,7 @@ namespace AndreTurismAPP.HotelServices.Controllers
         // PUT: api/Hotels/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutHotel(int id, Hotel hotel)
+        public async Task<ActionResult<Hotel>> PutHotel(int id, Hotel hotel)
         {
             if (id != hotel.Id)
             {
@@ -66,6 +66,7 @@ namespace AndreTurismAPP.HotelServices.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+            
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -79,7 +80,7 @@ namespace AndreTurismAPP.HotelServices.Controllers
                 }
             }
 
-            return NoContent();
+            return hotel;
         }
 
         // POST: api/Hotels
@@ -98,12 +99,12 @@ namespace AndreTurismAPP.HotelServices.Controllers
             _context.Hotel.Add(hotel);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetHotel", new { id = hotel.Id }, hotel);
+            return  hotel;
         }
 
         // DELETE: api/Hotels/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteHotel(int id)
+        public async Task<ActionResult<int>> DeleteHotel(int id)
         {
             if (_context.Hotel == null)
             {
@@ -118,7 +119,7 @@ namespace AndreTurismAPP.HotelServices.Controllers
             _context.Hotel.Remove(hotel);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return 1;
         }
 
         private bool HotelExists(int id)

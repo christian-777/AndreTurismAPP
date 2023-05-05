@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using AndreTurismAPP.TicketServices.Data;
 using Models;
 using AndreTurismAPP.TicketServices.Services;
+using Newtonsoft.Json;
+using System.Text;
+using Microsoft.AspNetCore.Connections;
+using RabbitMQ.Client;
 
 namespace AndreTurismAPP.TicketServices.Controllers
 {
@@ -16,10 +20,13 @@ namespace AndreTurismAPP.TicketServices.Controllers
     public class TicketsController : ControllerBase
     {
         private readonly AndreTurismAPPTicketServicesContext _context;
+        private readonly ConnectionFactory _factory;
+        private const string QUEUE_NAME = "message";
 
-        public TicketsController(AndreTurismAPPTicketServicesContext context)
+        public TicketsController(AndreTurismAPPTicketServicesContext context, ConnectionFactory factory)
         {
             _context = context;
+            _factory = factory;
         }
 
         // GET: api/Tickets
@@ -85,7 +92,7 @@ namespace AndreTurismAPP.TicketServices.Controllers
 
         // POST: api/Tickets
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<Ticket>> PostTicket(Ticket ticket)
         {
           if (_context.Ticket == null)
@@ -125,6 +132,37 @@ namespace AndreTurismAPP.TicketServices.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetTicket", new { id = ticket.Id }, ticket);
+        }*/
+
+        //POST mensageria
+        [HttpPost]
+        public IActionResult PostMQMessage([FromBody] Ticket ticket)
+        {
+            using (var connection = _factory.CreateConnection())
+            {
+                using (var channel = connection.CreateModel())
+                {
+
+                    channel.QueueDeclare(
+                        queue: QUEUE_NAME,
+                        durable: false,
+                        exclusive: false,
+                        autoDelete: false,
+                        arguments: null
+                        );
+
+                    var stringfieldMessage = JsonConvert.SerializeObject(ticket);
+                    var bytesMessage = Encoding.UTF8.GetBytes(stringfieldMessage);
+
+                    channel.BasicPublish(
+                        exchange: "",
+                        routingKey: QUEUE_NAME,
+                        basicProperties: null,
+                        body: bytesMessage
+                        );
+                }
+            }
+            return Accepted();
         }
 
         // DELETE: api/Tickets/5
